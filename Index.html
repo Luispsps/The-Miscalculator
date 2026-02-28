@@ -1,1 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🧠💀 BRAIN ROT CALCULATOR 💀🧠</title>
+  <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Rubik+Dirt&family=Rubik+Bubbles&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --neon-green: #39ff14;
+      --neon-pink: #ff2d78;
+      --neon-yellow: #ffe600;
+      --neon-blue: #00eaff;
+      --neon-orange: #ff6b00;
+    }
 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      font-family: 'Boogaloo', cursive;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.15) 2px,
+        rgba(0,0,0,0.15) 4px
+      );
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* Floating emoji background */
+    .floaters {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .floater {
+      position: absolute;
+      font-size: 2rem;
+      animation: floatUp linear infinite;
+      opacity: 0.15;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(110vh) rotate(0deg); opacity: 0.15; }
+      100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* Title */
+    .title {
+      font-family: 'Rubik Dirt', cursive;
+      font-size: clamp(2rem, 6vw, 4.5rem);
+      text-align: center;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 1;
+      background: linear-gradient(90deg, var(--neon-pink), var(--neon-yellow), var(--neon-green), var(--neon-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 10px rgba(255,45,120,0.6));
+      animation: titlePulse 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes titlePulse {
+      from { filter: drop-shadow(0 0 10px rgba(255,45,120,0.6)) drop-shadow(0 0 20px rgba(57,255,20,0.3)); }
+      to { filter: drop-shadow(0 0 20px rgba(0,234,255,0.8)) drop-shadow(0 0 40px rgba(255,230,0,0.4)); }
+    }
+
+    .subtitle {
+      color: var(--neon-yellow);
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 0 8px var(--neon-yellow);
+    }
+
+    /* Calculator wrapper */
+    .calc-wrapper {
+      position: relative;
+      z-index: 1;
+      background: rgba(255,255,255,0.03);
+      border: 2px solid var(--neon-green);
+      border-radius: 20px;
+      padding: 2rem;
+      width: min(95vw, 420px);
+      box-shadow: 0 0 30px rgba(57,255,20,0.3), inset 0 0 30px rgba(0,0,0,0.5);
+    }
+
+    /* Display */
+    .display-area {
+      background: #000;
+      border: 2px solid var(--neon-blue);
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.5rem;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 4px;
+      box-shadow: 0 0 15px rgba(0,234,255,0.3), inset 0 0 10px rgba(0,0,0,0.8);
+    }
+
+    .display-expr {
+      color: rgba(0,234,255,0.5);
+      font-size: 1rem;
+      letter-spacing: 1px;
+      min-height: 1.2em;
+    }
+
+    .display-main {
+      color: var(--neon-green);
+      font-size: 2.5rem;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px var(--neon-green);
+      transition: all 0.1s;
+      word-break: break-all;
+      text-align: right;
+    }
+
+    /* Buttons grid */
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      font-family: 'Boogaloo', cursive;
+      font-size: 1.4rem;
+      padding: 0.75rem 0.5rem;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.1s;
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    button:active { transform: scale(0.92); }
+
+    /* Number buttons */
+    .btn-num {
+      background: #111;
+      color: #fff;
+      border-color: #333;
+    }
+    .btn-num:hover {
+      background: #1a1a1a;
+      border-color: var(--neon-blue);
+      color: var(--neon-blue);
+      box-shadow: 0 0 10px rgba(0,234,255,0.4);
+    }
+
+    /* Operator buttons */
+    .btn-op {
+      background: #1a0a00;
+      color: var(--neon-orange);
+      border-color: var(--neon-orange);
+      box-shadow: 0 0 8px rgba(255,107,0,0.3);
+    }
+    .btn-op:hover {
+      background: rgba(255,107,0,0.2);
+      box-shadow: 0 0 16px rgba(255,107,0,0.6);
+    }
+
+    /* Equals */
+    .btn-eq {
+      background: linear-gradient(135deg, var(--neon-pink), var(--neon-orange));
+      color: #fff;
+      border-color: transparent;
+      font-size: 1.6rem;
+      grid-column: span 2;
+      box-shadow: 0 0 15px rgba(255,45,120,0.5);
+      animation: eqGlow 1.5s ease-in-out infinite alternate;
+    }
+    .btn-eq:hover {
+      box-shadow: 0 0 30px rgba(255,45,120,0.9);
+      transform: scale(1.03);
+    }
+
+    @keyframes eqGlow {
+      from { box-shadow: 0 0 15px rgba(255,45,120,0.5); }
+      to { box-shadow: 0 0 25px rgba(255,230,0,0.7); }
+    }
+
+    /* Clear */
+    .btn-clear {
+      background: #0a001a;
+      color: var(--neon-pink);
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 8px rgba(255,45,120,0.3);
+    }
+    .btn-clear:hover {
+      background: rgba(255,45,120,0.15);
+      box-shadow: 0 0 16px rgba(255,45,120,0.6);
+    }
+
+    /* Backspace */
+    .btn-back {
+      background: #0a001a;
+      color: var(--neon-yellow);
+      border-color: var(--neon-yellow);
+    }
+    .btn-back:hover {
+      background: rgba(255,230,0,0.1);
+      box-shadow: 0 0 12px rgba(255,230,0,0.5);
+    }
+
+    /* Result popup */
+    .result-popup {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .result-popup.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .result-popup-bg {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(4px);
+    }
+    .result-popup-box {
+      position: relative;
+      z-index: 1;
+      background: #0d0d0d;
+      border: 3px solid var(--neon-pink);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      width: min(90vw, 400px);
+      text-align: center;
+      box-shadow: 0 0 50px rgba(255,45,120,0.5);
+      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+      to { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .result-emoji {
+      font-size: 4rem;
+      display: block;
+      margin-bottom: 0.5rem;
+      animation: bounce 0.6s ease infinite alternate;
+    }
+
+    @keyframes bounce {
+      from { transform: translateY(0); }
+      to { transform: translateY(-12px); }
+    }
+
+    .result-answer {
+      font-family: 'Rubik Bubbles', cursive;
+      font-size: 3rem;
+      color: var(--neon-green);
+      text-shadow: 0 0 20px var(--neon-green);
+      margin: 0.5rem 0;
+    }
+
+    .result-joke {
+      font-size: 1.3rem;
+      color: var(--neon-yellow);
+      line-height: 1.4;
+      margin: 1rem 0 1.5rem;
+      text-shadow: 0 0 8px rgba(255,230,0,0.5);
+    }
+
+    .result-close {
+      background: linear-gradient(135deg, var(--neon-pink), var(--neon-blue));
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      font-family: 'Boogaloo', cursive;
+      font-size: 1.3rem;
+      padding: 0.6rem 2rem;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 0 20px rgba(255,45,120,0.5);
+      transition: transform 0.1s;
+    }
+    .result-close:hover { transform: scale(1.05); }
+
+    /* Confetti */
+    .confetti-piece {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      animation: confettiFall linear forwards;
+      z-index: 101;
+      pointer-events: none;
+    }
+
+    @keyframes confettiFall {
+      0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* ROT meter */
+    .rot-meter {
+      margin-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .rot-label {
+      color: var(--neon-pink);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      text-shadow: 0 0 6px var(--neon-pink);
+    }
+
+    .rot-bar-bg {
+      flex: 1;
+      height: 12px;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .rot-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--neon-green), var(--neon-yellow), var(--neon-pink));
+      border-radius: 20px;
+      transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 0 8px rgba(57,255,20,0.5);
+    }
+
+    .rot-value {
+      color: var(--neon-yellow);
+      font-size: 0.9rem;
+      min-width: 35px;
+      text-align: right;
+      text-shadow: 0 0 6px var(--neon-yellow);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Floating background emojis -->
+<div class="floaters" id="floaters"></div>
+
+<h1 class="title">🧠💀 Brain Rot Calc 💀🧠</h1>
+<p class="subtitle">100% mathematically accurate (trust me bro)</p>
+
+<div class="calc-wrapper">
+  <div class="display-area">
+    <div class="display-expr" id="expr"></div>
+    <div class="display-main" id="display">0</div>
+  </div>
+
+  <div class="buttons">
+    <button class="btn-clear" onclick="clearAll()">AC</button>
+    <button class="btn-back" onclick="backspace()">⌫</button>
+    <button class="btn-op" onclick="inputOp('%')">%</button>
+    <button class="btn-op" onclick="inputOp('÷')">÷</button>
+
+    <button class="btn-num" onclick="inputNum('7')">7</button>
+    <button class="btn-num" onclick="inputNum('8')">8</button>
+    <button class="btn-num" onclick="inputNum('9')">9</button>
+    <button class="btn-op" onclick="inputOp('×')">×</button>
+
+    <button class="btn-num" onclick="inputNum('4')">4</button>
+    <button class="btn-num" onclick="inputNum('5')">5</button>
+    <button class="btn-num" onclick="inputNum('6')">6</button>
+    <button class="btn-op" onclick="inputOp('-')">−</button>
+
+    <button class="btn-num" onclick="inputNum('1')">1</button>
+    <button class="btn-num" onclick="inputNum('2')">2</button>
+    <button class="btn-num" onclick="inputNum('3')">3</button>
+    <button class="btn-op" onclick="inputOp('+')">+</button>
+
+    <button class="btn-num" onclick="inputNum('0')" style="grid-column:span 2">0</button>
+    <button class="btn-num" onclick="inputNum('.')">.</button>
+    <button class="btn-eq" onclick="calculate()">=</button>
+  </div>
+
+  <div class="rot-meter">
+    <span class="rot-label">🧠 Rot Level</span>
+    <div class="rot-bar-bg"><div class="rot-bar-fill" id="rotBar"></div></div>
+    <span class="rot-value" id="rotVal">0%</span>
+  </div>
+</div>
+
+<!-- Result popup -->
+<div class="result-popup" id="popup">
+  <div class="result-popup-bg" onclick="closePopup()"></div>
+  <div class="result-popup-box">
+    <span class="result-emoji" id="popupEmoji">💀</span>
+    <div id="popupExpr" style="color:#888; font-size:1rem; margin-bottom:4px;"></div>
+    <div class="result-answer" id="popupAnswer">69</div>
+    <div class="result-joke" id="popupJoke">ur doing amazing sweetie</div>
+    <button class="result-close" onclick="closePopup()">ok bestie 💅</button>
+  </div>
+</div>
+
+<script>
+  // ─── State ────────────────────────────────────────────────
+  let current = '';
+  let expression = '';
+  let rotLevel = 0;
+
+  // ─── Brain rot responses ──────────────────────────────────
+  const rotResponses = [
+    // [expression_check_fn, answer, joke, emoji]
+    [e => e === '2+2',      '22',         'concatenation is a type of math', '🗿'],
+    [e => e === '1+1',      'window',     'because 1 window + 1 window = window', '🪟'],
+    [e => e === '0+0',      '0',          'even the brain rot calculator has limits', '😐'],
+    [e => e === '69+1',     '420',        'the holy transition', '🍃'],
+    [e => e === '420+1',    '69',         'the circle of life', '🔄'],
+    [e => hasResult(e,0),   '-Infinity',  'dividing by zero? absolute sigma behavior', '🤯'],
+    [e => e === '9×9',      '81',         'wait this one is actually right... sus', '🤨'],
+    [e => matches(e,42),    'the answer', 'to life, the universe, and everything', '🌌'],
+    [e => e === '1×1',      '2',          'multiplication should go up, not stay same', '🧐'],
+    [e => matches(e,100),   '69',         'nothing ever equals 100 in this economy', '📉'],
+    [e => e === '666',      '666',        '...we don\'t talk about this one', '😈'],
+    [e => matches(e,1000),  'a lot',      'that\'s just too many tbh', '😵‍💫'],
+    [e => matches(e,999),   '1000-1',     'close but no rizz', '💀'],
+    [e => e.includes('÷÷'), 'NaN',        'double divide is illegal in 47 states', '🚔'],
+    [e => e === '8÷2',      '0',          'idk man seemed like a lot to keep', '🤷'],
+    [e => matches(e,7),     'lucky',      'seven is a vibe not a number', '🍀'],
+  ];
+
+  function matches(expr, val) {
+    try {
+      const real = eval(normalizeExpr(expr));
+      return real === val;
+    } catch { return false; }
+  }
+
+  function hasResult(expr) {
+    return expr.includes('÷0') || expr.includes('/0');
+  }
+
+  function normalizeExpr(e) {
+    return e.replace(/×/g,'*').replace(/÷/g,'/').replace(/%/g,'%');
+  }
+
+  // ─── Generic brain rot answers for anything not matched ───
+  const genericJokes = [
+    ['ohio', '🗺️', 'only in ohio would this equal that'],
+    ['rizz', '✨', 'the math was giving no rizz'],
+    ['cooked', '🍳', 'bro is absolutely cooked'],
+    ['npc response', '🤖', 'skill issue detected'],
+    ['mid', '😑', 'not bad, not good. purely mid.'],
+    ['understood the assignment', '✅', 'and nailed it (wrong)'],
+    ['W', '🏆', 'winning with the wrong answer'],
+    ['based', '🧢', 'mathematically based'],
+    ['ratio', '📊', 'you just got ratioed by arithmetic'],
+    ['glaze', '🍩', 'the numbers are glazing rn'],
+    ['delulu', '🌸', 'delusional math hits different'],
+    ['sigma answer', '😤', 'only sigmas get this result'],
+    ['bussin fr fr', '🔥', 'no cap this answer is bussin'],
+    ['slay', '💅', 'the calculator slayed'],
+    ['certified banger', '🎵', 'this equation is a certified banger'],
+  ];
+
+  // ─── Calculator logic ─────────────────────────────────────
+  function inputNum(n) {
+    if (current.length > 15) return;
+    if (n === '.' && current.includes('.')) return;
+    current += n;
+    expression += n;
+    updateDisplay();
+  }
+
+  function inputOp(op) {
+    if (!current && !expression) return;
+    if (current) {
+      expression += op;
+      current = '';
+    } else {
+      expression = expression.slice(0, -1) + op;
+    }
+    updateDisplay();
+  }
+
+  function backspace() {
+    if (!expression) return;
+    const last = expression[expression.length - 1];
+    expression = expression.slice(0, -1);
+    const ops = ['+','-','×','÷','%'];
+    if (!ops.includes(last)) current = current.slice(0,-1);
+    else current = '';
+    updateDisplay();
+  }
+
+  function clearAll() {
+    current = '';
+    expression = '';
+    updateDisplay();
+    setRotLevel(0);
+  }
+
+  function updateDisplay() {
+    document.getElementById('display').textContent = current || expression || '0';
+    document.getElementById('expr').textContent = expression ? expression + ' =' : '';
+  }
+
+  function calculate() {
+    if (!expression) return;
+    const expr = expression.trim();
+
+    // Check special brain rot rules
+    let answer, joke, emoji;
+    let found = false;
+
+    for (const [check, ans, j, em] of rotResponses) {
+      if (check(expr)) {
+        answer = ans;
+        joke = j;
+        emoji = em;
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      // Try real math, then override with brain rot 40% of the time
+      let realAnswer;
+      try {
+        realAnswer = eval(normalizeExpr(expr));
+        if (!isFinite(realAnswer)) {
+          realAnswer = 'undefined (respectfully)';
+        } else {
+          realAnswer = Math.round(realAnswer * 10000) / 10000;
+        }
+      } catch {
+        realAnswer = 'syntax error swag';
+      }
+
+      const rotChance = Math.random();
+      if (rotChance < 0.55) {
+        // Show brain rot answer
+        const g = genericJokes[Math.floor(Math.random() * genericJokes.length)];
+        answer = g[0];
+        emoji = g[1];
+        joke = g[2];
+      } else {
+        // Actual correct answer (rare)
+        answer = String(realAnswer);
+        emoji = '😱';
+        joke = 'wait... this one is actually correct?? report this bug';
+      }
+    }
+
+    // Increase rot level
+    const newRot = Math.min(100, rotLevel + Math.floor(Math.random() * 20) + 10);
+    setRotLevel(newRot);
+
+    showResult(expr, answer, joke, emoji);
+    expression = '';
+    current = '';
+    updateDisplay();
+  }
+
+  function setRotLevel(val) {
+    rotLevel = val;
+    document.getElementById('rotBar').style.width = val + '%';
+    document.getElementById('rotVal').textContent = val + '%';
+  }
+
+  // ─── Popup ────────────────────────────────────────────────
+  function showResult(expr, answer, joke, emoji) {
+    document.getElementById('popupEmoji').textContent = emoji;
+    document.getElementById('popupExpr').textContent = expr + ' =';
+    document.getElementById('popupAnswer').textContent = answer;
+    document.getElementById('popupJoke').textContent = joke;
+    document.getElementById('popup').classList.add('show');
+    launchConfetti();
+  }
+
+  function closePopup() {
+    document.getElementById('popup').classList.remove('show');
+  }
+
+  // ─── Confetti ─────────────────────────────────────────────
+  function launchConfetti() {
+    const colors = ['#ff2d78','#39ff14','#ffe600','#00eaff','#ff6b00'];
+    for (let i = 0; i < 60; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.top = '-10px';
+      el.style.background = colors[Math.floor(Math.random() * colors.length)];
+      el.style.transform = `rotate(${Math.random()*360}deg)`;
+      el.style.animationDuration = (Math.random() * 2 + 1) + 's';
+      el.style.animationDelay = (Math.random() * 0.5) + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+  }
+
+  // ─── Floating bg emojis ───────────────────────────────────
+  const bgEmojis = ['🧠','💀','🗿','✨','🔥','💅','😈','🌀','👁️','🤯','⚡','🍃'];
+  const floaters = document.getElementById('floaters');
+
+  function spawnFloater() {
+    const el = document.createElement('div');
+    el.className = 'floater';
+    el.textContent = bgEmojis[Math.floor(Math.random() * bgEmojis.length)];
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.animationDuration = (Math.random() * 8 + 6) + 's';
+    el.style.animationDelay = '0s';
+    el.style.fontSize = (Math.random() * 1.5 + 1) + 'rem';
+    floaters.appendChild(el);
+    setTimeout(() => el.remove(), 16000);
+  }
+
+  setInterval(spawnFloater, 800);
+  for (let i = 0; i < 8; i++) setTimeout(spawnFloater, i * 200);
+
+  // ─── Keyboard support ─────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') inputNum(e.key);
+    else if (e.key === '.') inputNum('.');
+    else if (e.key === '+') inputOp('+');
+    else if (e.key === '-') inputOp('-');
+    else if (e.key === '*') inputOp('×');
+    else if (e.key === '/') { e.preventDefault(); inputOp('÷'); }
+    else if (e.key === '%') inputOp('%');
+    else if (e.key === 'Enter' || e.key === '=') calculate();
+    else if (e.key === 'Backspace') backspace();
+    else if (e.key === 'Escape') { closePopup(); clearAll(); }
+  });
+</script>
+</body>
+</html>
